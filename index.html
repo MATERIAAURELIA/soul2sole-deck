@@ -364,13 +364,10 @@ const DEFAULT_SLIDES = [
 ];
 
 // ===== DATA =====
-// Force clear stale data
-localStorage.removeItem('soul2sole-deck-v2');
-let slides = JSON.parse(JSON.stringify(DEFAULT_SLIDES));
-
 function loadData() {
   try { const d = localStorage.getItem(STORAGE); return d ? JSON.parse(d) : null; } catch(e) { return null; }
 }
+let slides = loadData() || JSON.parse(JSON.stringify(DEFAULT_SLIDES));
 
 function saveData() {
   // Scrape current content from DOM

@@ -376,7 +376,7 @@ function saveData() {
     if (si >= slides.length) return;
     const blocks = el.querySelectorAll('.block-content');
     blocks.forEach((b, bi) => {
-      if (bi < slides[si].blocks.length) {
+      if (bi < slides[si].blocks.length && slides[si].blocks[bi].type !== 'button') {
         slides[si].blocks[bi].text = b.innerHTML;
         const fs = b.style.fontSize;
         if (fs) slides[si].blocks[bi].fontSize = fs;

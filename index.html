@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Earth Harmony × Soul2Sole</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --gold: #d4a24e;
+    --text: #e8e0d4;
+    --text2: #b8b0a4;
+    --text3: #706860;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; overflow:hidden; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== TOOLBAR ===== */
+  .toolbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: rgba(10,10,10,0.95);
+    border-bottom: 1px solid rgba(212,162,78,0.15);
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .toolbar.hidden { opacity: 0; pointer-events: none; }
+
+  .tb-group { display: flex; gap: 6px; align-items: center; }
+
+  .tb-btn {
+    background: none;
+    border: 1px solid var(--text3);
+    color: var(--text2);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+  }
+
+  .tb-btn:hover, .tb-btn:active { border-color: var(--gold); color: var(--gold); }
+  .tb-btn.active { background: var(--gold); color: #0a0a0a; border-color: var(--gold); }
+
+  .tb-btn.danger { border-color: #a33; color: #e55; }
+  .tb-btn.danger:hover { background: #a33; color: #fff; }
+
+  .slide-counter {
+    color: var(--text3);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  /* ===== DECK ===== */
+  .deck {
+    display: flex;
+    height: 100vh;
+    transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+
+  .slide {
+    min-width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 70px 10vw 60px;
+    position: relative;
+    text-align: center;
+  }
+
+  /* ===== DOTS ===== */
+  .dots {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 90;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text3);
+    opacity: 0.3;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .dot.active { background: var(--gold); opacity: 1; transform: scale(1.4); }
+
+  /* ===== EDITABLE BLOCKS ===== */
+  .block {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .block-content {
+    min-height: 1em;
+    min-width: 40px;
+    transition: outline 0.2s;
+    word-wrap: break-word;
+  }
+
+  body.edit-mode .block-content {
+    outline: 1px dashed rgba(212,162,78,0.25);
+    outline-offset: 8px;
+    cursor: text;
+  }
+
+  body.edit-mode .block-content:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 6px;
+  }
+
+  /* Block controls */
+  .block-ctrl {
+    display: none;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  body.edit-mode .block-ctrl { display: flex; }
+
+  .bc-btn {
+    background: rgba(212,162,78,0.15);
+    border: 1px solid rgba(212,162,78,0.3);
+    color: var(--gold);
+    width: 26px; height: 26px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .bc-btn:active { background: var(--gold); color: #0a0a0a; }
+
+  /* ===== PHOTO ===== */
+  .slide-photo {
+    max-width: 200px;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid rgba(212,162,78,0.3);
+    margin-bottom: 16px;
+  }
+
+  .photo-upload-zone {
+    display: none;
+    width: 120px; height: 120px;
+    border: 2px dashed rgba(212,162,78,0.3);
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 11px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  body.edit-mode .photo-upload-zone { display: flex; }
+
+  /* ===== TYPOGRAPHY PRESETS ===== */
+  .t-heading {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    color: var(--gold);
+    font-size: clamp(28px, 7vw, 56px);
+    line-height: 1.2;
+  }
+
+  .t-subheading {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    color: var(--gold);
+    font-size: clamp(18px, 4vw, 28px);
+    line-height: 1.3;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .t-label {
+    font-size: clamp(11px, 2.5vw, 16px);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .t-body {
+    color: var(--text2);
+    font-weight: 300;
+    font-size: clamp(16px, 3vw, 22px);
+    line-height: 1.7;
+  }
+
+  .t-small {
+    color: var(--text3);
+    font-weight: 300;
+    font-size: clamp(13px, 2.5vw, 18px);
+    line-height: 1.6;
+  }
+
+  .t-quote {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    color: var(--gold);
+    font-size: clamp(22px, 5vw, 40px);
+    line-height: 1.4;
+  }
+
+  .t-bullet {
+    color: var(--text2);
+    font-weight: 300;
+    font-size: clamp(16px, 3vw, 20px);
+    line-height: 1.5;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(212,162,78,0.08);
+  }
+
+  .t-bullet:last-of-type { border: none; }
+
+  /* Button block */
+  .block-btn-link {
+    display: inline-block;
+    background: var(--gold);
+    color: #0a0a0a;
+    padding: 16px 44px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: clamp(16px, 3vw, 20px);
+    letter-spacing: 1px;
+    transition: transform 0.2s;
+  }
+
+  .block-btn-link:active { transform: scale(0.96); }
+
+  /* Contact */
+  .contact-info { color: var(--text3); font-size: 14px; line-height: 2; }
+  .contact-info a { color: var(--gold); text-decoration: none; }
+
+  @media (max-width: 767px) {
+    .slide { padding: 70px 7vw 60px; }
+    .toolbar { padding: 6px 10px; }
+    .tb-btn { padding: 5px 8px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar" id="toolbar">
+  <div class="tb-group">
+    <button class="tb-btn" id="editBtn" onclick="toggleEdit()">✏️ Edit</button>
+    <button class="tb-btn" onclick="addSlide()">+ Slide</button>
+    <button class="tb-btn danger" onclick="deleteSlide()">🗑 Slide</button>
+  </div>
+  <div class="tb-group">
+    <button class="tb-btn" onclick="go(cur-1)">◀</button>
+    <span class="slide-counter" id="counter">1/6</span>
+    <button class="tb-btn" onclick="go(cur+1)">▶</button>
+  </div>
+  <div class="tb-group">
+    <button class="tb-btn" onclick="moveSlide(-1)">⬅ Move</button>
+    <button class="tb-btn" onclick="moveSlide(1)">Move ➡</button>
+    <button class="tb-btn" onclick="toggleToolbar()">Hide</button>
+  </div>
+</div>
+
+<div class="deck" id="deck"></div>
+<div class="dots" id="dots"></div>
+
+<!-- Hidden file input for photos -->
+<input type="file" id="photoInput" accept="image/*" style="display:none">
+
+<script>
+const STORAGE = 'soul2sole-deck-v2';
+let cur = 0, editMode = false, startX = 0, dragging = false;
+
+// ===== DEFAULT SLIDES =====
+const DEFAULT_SLIDES = [
+  {
+    blocks: [
+      { type: 'heading', text: 'Earth Harmony' },
+      { type: 'subheading', text: 'Sound & Wellness' },
+      { type: 'small', text: 'A proposal for Soul to Soul Massage' }
+    ]
+  },
+  {
+    photo: 'photo1.png',
+    blocks: [
+      { type: 'label', text: 'Who I Am' },
+      { type: 'heading', text: 'Marcus' },
+      { type: 'body', text: 'Sound therapist. Musician.<br>I compose ambient music designed for healing spaces.' }
+    ]
+  },
+  {
+    blocks: [
+      { type: 'label', text: 'What You Get' },
+      { type: 'heading', text: 'Curated Sound<br>For Your Space' },
+      { type: 'bullet', text: 'Playlists built for massage — no vocals, no surprises' },
+      { type: 'bullet', text: 'Multiple moods — morning, deep healing, wind-down' },
+      { type: 'bullet', text: 'One tap to play, runs for hours' },
+      { type: 'bullet', text: 'Fresh tracks added over time' },
+      { type: 'bullet', text: 'Your staff picks what stays' }
+    ]
+  },
+  {
+    blocks: [
+      { type: 'label', text: 'Why Earth Harmony' },
+      { type: 'heading', text: 'Why Me' },
+      { type: 'bullet', text: "I'm a working sound therapist — I know what belongs in a treatment room" },
+      { type: 'bullet', text: '100+ tracks composed specifically for healing spaces' },
+      { type: 'bullet', text: '9,700 people already trust this music for their practice' },
+      { type: 'bullet', text: 'Not an algorithm. A human who listens to feedback.' },
+      { type: 'bullet', text: 'Your staff tells me what works. I make more of it.' }
+    ]
+  },
+  {
+    blocks: [
+      { type: 'heading', text: 'First Year Free' },
+      { type: 'body', text: 'No setup fees. No contracts. No risk.' },
+      { type: 'small', text: 'Love it? Continue for <strong>$85/year</strong>.' }
+    ]
+  },
+  {
+    photo: 'photo2.png',
+    blocks: [
+      { type: 'heading', text: 'Hear It' },
+      { type: 'button', text: '▶ Play the Sampler', url: 'https://www.earthharmonysoundwellness.com/massage-music' },
+      { type: 'contact', text: '<a href="tel:+17802576428">780-257-6428</a><br><a href="mailto:earthharmonysoundhealing@gmail.com">earthharmonysoundhealing@gmail.com</a>' }
+    ]
+  }
+];
+
+// ===== DATA =====
+// Force clear stale data
+localStorage.removeItem('soul2sole-deck-v2');
+let slides = JSON.parse(JSON.stringify(DEFAULT_SLIDES));
+
+function loadData() {
+  try { const d = localStorage.getItem(STORAGE); return d ? JSON.parse(d) : null; } catch(e) { return null; }
+}
+
+function saveData() {
+  // Scrape current content from DOM
+  const slideEls = document.querySelectorAll('.slide');
+  slideEls.forEach((el, si) => {
+    if (si >= slides.length) return;
+    const blocks = el.querySelectorAll('.block-content');
+    blocks.forEach((b, bi) => {
+      if (bi < slides[si].blocks.length) {
+        slides[si].blocks[bi].text = b.innerHTML;
+        const fs = b.style.fontSize;
+        if (fs) slides[si].blocks[bi].fontSize = fs;
+        else delete slides[si].blocks[bi].fontSize;
+      }
+    });
+  });
+  localStorage.setItem(STORAGE, JSON.stringify(slides));
+}
+
+// ===== RENDER =====
+function render() {
+  const deck = document.getElementById('deck');
+  deck.innerHTML = '';
+  deck.style.width = (slides.length * 100) + 'vw';
+
+  slides.forEach((slide, si) => {
+    const div = document.createElement('div');
+    div.className = 'slide';
+
+    // Photo
+    if (slide.photo) {
+      const img = document.createElement('img');
+      img.className = 'slide-photo';
+      img.src = slide.photo;
+      if (slide.photoSize) { img.style.width = slide.photoSize + 'px'; img.style.height = slide.photoSize + 'px'; }
+      if (slide.photoRadius != null) img.style.borderRadius = slide.photoRadius + '%';
+      div.appendChild(img);
+    }
+
+    // Photo upload zone (edit mode)
+    if (!slide.photo) {
+      const zone = document.createElement('div');
+      zone.className = 'photo-upload-zone';
+      zone.textContent = '+ PHOTO';
+      zone.onclick = () => triggerPhotoUpload(si);
+      div.appendChild(zone);
+    } else {
+      // Photo controls in edit mode
+      const pctrl = document.createElement('div');
+      pctrl.className = 'block-ctrl';
+      pctrl.innerHTML = `
+        <button class="bc-btn" onclick="photoResize(${si},-20)" title="Smaller">−</button>
+        <button class="bc-btn" onclick="photoResize(${si},20)" title="Bigger">+</button>
+        <button class="bc-btn" onclick="photoRoundness(${si})" title="Round/Square">◑</button>
+        <button class="bc-btn" onclick="removePhoto(${si})" title="Remove">✕</button>
+      `;
+      div.appendChild(pctrl);
+    }
+
+    // Blocks
+    slide.blocks.forEach((block, bi) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'block';
+
+      if (block.type === 'button') {
+        const a = document.createElement('a');
+        a.className = 'block-btn-link';
+        a.href = block.url || '#';
+        a.target = '_blank';
+        a.innerHTML = block.text;
+        a.contentEditable = editMode;
+        wrapper.appendChild(a);
+      } else if (block.type === 'contact') {
+        const c = document.createElement('div');
+        c.className = 'contact-info block-content';
+        c.innerHTML = block.text;
+        c.contentEditable = editMode;
+        wrapper.appendChild(c);
+      } else {
+        const el = document.createElement('div');
+        el.className = `block-content t-${block.type}`;
+        el.innerHTML = block.text;
+        el.contentEditable = editMode;
+        if (block.fontSize) el.style.fontSize = block.fontSize;
+        wrapper.appendChild(el);
+      }
+
+      // Block controls
+      const ctrl = document.createElement('div');
+      ctrl.className = 'block-ctrl';
+      ctrl.innerHTML = `
+        <button class="bc-btn" onclick="resizeBlock(${si},${bi},-2)" title="Smaller">A−</button>
+        <button class="bc-btn" onclick="resizeBlock(${si},${bi},2)" title="Bigger">A+</button>
+        <button class="bc-btn" onclick="addBlock(${si},${bi})" title="Add below">+</button>
+        <button class="bc-btn" onclick="deleteBlock(${si},${bi})" title="Delete">✕</button>
+        <button class="bc-btn" onclick="cycleType(${si},${bi})" title="Change style">T</button>
+      `;
+      wrapper.appendChild(ctrl);
+      div.appendChild(wrapper);
+    });
+
+    // Add block button at bottom (edit mode)
+    const addBtn = document.createElement('div');
+    addBtn.className = 'block-ctrl';
+    addBtn.style.marginTop = '16px';
+    addBtn.innerHTML = `<button class="bc-btn" onclick="addBlock(${si},${slides[si].blocks.length-1})" style="width:auto;padding:0 12px;font-size:11px;">+ Add Block</button>`;
+    div.appendChild(addBtn);
+
+    deck.appendChild(div);
+  });
+
+  updateDots();
+  updateCounter();
+  goTo(cur);
+}
+
+// ===== NAVIGATION =====
+function goTo(n) {
+  cur = Math.max(0, Math.min(n, slides.length - 1));
+  document.getElementById('deck').style.transform = `translateX(-${cur * 100}vw)`;
+  updateDots();
+  updateCounter();
+}
+function go(n) { saveData(); goTo(n); }
+
+function updateDots() {
+  const dots = document.getElementById('dots');
+  dots.innerHTML = '';
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === cur ? ' active' : '');
+    d.onclick = () => go(i);
+    dots.appendChild(d);
+  });
+}
+
+function updateCounter() {
+  document.getElementById('counter').textContent = `${cur + 1}/${slides.length}`;
+}
+
+// ===== EDIT MODE =====
+function toggleEdit() {
+  saveData();
+  editMode = !editMode;
+  document.body.classList.toggle('edit-mode', editMode);
+  document.getElementById('editBtn').textContent = editMode ? '✅ Done' : '✏️ Edit';
+  document.getElementById('editBtn').classList.toggle('active', editMode);
+  render();
+}
+
+// ===== SLIDE OPERATIONS =====
+function addSlide() {
+  saveData();
+  const newSlide = {
+    blocks: [
+      { type: 'label', text: 'NEW SLIDE' },
+      { type: 'heading', text: 'Edit Me' },
+      { type: 'body', text: 'Tap any text to change it' }
+    ]
+  };
+  slides.splice(cur + 1, 0, newSlide);
+  saveData();
+  render();
+  goTo(cur + 1);
+}
+
+function deleteSlide() {
+  if (slides.length <= 1) return;
+  saveData();
+  slides.splice(cur, 1);
+  if (cur >= slides.length) cur = slides.length - 1;
+  localStorage.setItem(STORAGE, JSON.stringify(slides));
+  render();
+}
+
+function moveSlide(dir) {
+  const target = cur + dir;
+  if (target < 0 || target >= slides.length) return;
+  saveData();
+  [slides[cur], slides[target]] = [slides[target], slides[cur]];
+  cur = target;
+  saveData();
+  render();
+}
+
+// ===== BLOCK OPERATIONS =====
+const TYPES = ['heading', 'subheading', 'label', 'body', 'small', 'quote', 'bullet'];
+
+function cycleType(si, bi) {
+  saveData();
+  const current = slides[si].blocks[bi].type;
+  const idx = TYPES.indexOf(current);
+  slides[si].blocks[bi].type = TYPES[(idx + 1) % TYPES.length];
+  delete slides[si].blocks[bi].fontSize;
+  saveData();
+  render();
+}
+
+function resizeBlock(si, bi, delta) {
+  const slideEl = document.querySelectorAll('.slide')[si];
+  const blockEl = slideEl.querySelectorAll('.block-content')[bi];
+  if (!blockEl) return;
+  const current = parseFloat(window.getComputedStyle(blockEl).fontSize);
+  const next = Math.max(10, Math.min(80, current + delta));
+  blockEl.style.fontSize = next + 'px';
+  slides[si].blocks[bi].fontSize = next + 'px';
+  saveData();
+}
+
+function addBlock(si, afterBi) {
+  saveData();
+  slides[si].blocks.splice(afterBi + 1, 0, { type: 'body', text: 'New text' });
+  saveData();
+  render();
+}
+
+function deleteBlock(si, bi) {
+  if (slides[si].blocks.length <= 1) return;
+  saveData();
+  slides[si].blocks.splice(bi, 1);
+  saveData();
+  render();
+}
+
+// ===== PHOTO =====
+let uploadTarget = -1;
+
+function triggerPhotoUpload(si) {
+  if (!editMode) return;
+  uploadTarget = si;
+  document.getElementById('photoInput').click();
+}
+
+document.getElementById('photoInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file || uploadTarget < 0) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    slides[uploadTarget].photo = ev.target.result;
+    saveData();
+    render();
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+
+function removePhoto(si) {
+  delete slides[si].photo;
+  delete slides[si].photoSize;
+  delete slides[si].photoRadius;
+  saveData();
+  render();
+}
+
+function photoResize(si, delta) {
+  const img = document.querySelectorAll('.slide')[si].querySelector('.slide-photo');
+  if (!img) return;
+  const cur = img.offsetWidth;
+  const next = Math.max(60, Math.min(400, cur + delta));
+  slides[si].photoSize = next;
+  img.style.width = next + 'px';
+  img.style.height = next + 'px';
+  saveData();
+}
+
+function photoRoundness(si) {
+  const current = slides[si].photoRadius != null ? slides[si].photoRadius : 50;
+  slides[si].photoRadius = current === 50 ? 8 : current === 8 ? 0 : 50;
+  saveData();
+  render();
+}
+
+// ===== SWIPE =====
+const deck = document.getElementById('deck');
+
+deck.addEventListener('touchstart', e => {
+  if (editMode && (e.target.isContentEditable || e.target.closest('.block-ctrl'))) return;
+  startX = e.touches[0].clientX; dragging = true;
+});
+deck.addEventListener('touchend', e => {
+  if (!dragging) return; dragging = false;
+  const d = startX - e.changedTouches[0].clientX;
+  if (Math.abs(d) > 50) go(cur + (d > 0 ? 1 : -1));
+});
+deck.addEventListener('mousedown', e => {
+  if (editMode && (e.target.isContentEditable || e.target.closest('.block-ctrl') || e.target.closest('.photo-upload-zone'))) return;
+  startX = e.clientX; dragging = true; e.preventDefault();
+});
+deck.addEventListener('mouseup', e => {
+  if (!dragging) return; dragging = false;
+  const d = startX - e.clientX;
+  if (Math.abs(d) > 50) go(cur + (d > 0 ? 1 : -1));
+});
+document.addEventListener('keydown', e => {
+  if (editMode && document.activeElement.isContentEditable) return;
+  if (e.key === 'ArrowRight' || e.key === ' ') { go(cur + 1); e.preventDefault(); }
+  if (e.key === 'ArrowLeft') { go(cur - 1); e.preventDefault(); }
+});
+
+// Double-tap to show toolbar
+let lastTap = 0;
+document.addEventListener('touchend', () => {
+  const now = Date.now();
+  if (now - lastTap < 300) document.getElementById('toolbar').classList.remove('hidden');
+  lastTap = now;
+});
+
+function toggleToolbar() { document.getElementById('toolbar').classList.toggle('hidden'); }
+document.addEventListener('dblclick', () => document.getElementById('toolbar').classList.remove('hidden'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('toolbar').classList.remove('hidden'); });
+
+// Auto-save periodically
+setInterval(saveData, 5000);
+
+// Reset
+window.resetDeck = function() {
+  if (confirm('Reset everything to defaults?')) {
+    localStorage.removeItem(STORAGE);
+    slides = JSON.parse(JSON.stringify(DEFAULT_SLIDES));
+    cur = 0;
+    render();
+  }
+};
+
+
+// Auto-fix: ensure ANY slide with "Hear It" has a button, and fix all slides missing button type
+(function() {
+  let d = JSON.parse(localStorage.getItem('soul2sole-deck-v2'));
+  if (d) {
+    let fixed = false;
+    // Check if ANY slide has a button type
+    let hasAnyButton = d.some(s => s.blocks.some(b => b.type === 'button'));
+    if (!hasAnyButton) {
+      // Replace last slide entirely
+      d[d.length - 1] = {
+        photo: 'photo2.png',
+        blocks: [
+          {type: 'heading', text: 'Hear It'},
+          {type: 'button', text: '\u25b6 Play the Sampler', url: 'https://www.earthharmonysoundwellness.com/massage-music'},
+          {type: 'contact', text: '<a href="tel:+17802576428">780-257-6428</a><br><a href="mailto:earthharmonysoundhealing@gmail.com">earthharmonysoundhealing@gmail.com</a>'}
+        ]
+      };
+      fixed = true;
+    }
+    // Also remove any blank "Edit Me" slides
+    d = d.filter(s => !s.blocks.some(b => b.text === 'Edit Me' || b.text === 'Tap to add your content'));
+    if (d.length !== JSON.parse(localStorage.getItem('soul2sole-deck-v2')).length) fixed = true;
+    if (fixed) {
+      localStorage.setItem('soul2sole-deck-v2', JSON.stringify(d));
+      console.log('Slides fixed, reloading...');
+      location.reload();
+    }
+  }
+})();
+
+// Init
+render();
+</script>
+
+</body>
+</html>
+
